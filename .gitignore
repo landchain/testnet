@@ -3,3 +3,5 @@ stamps
 genesis.json
 alloc-genesis.json
 account-number
+miner.log
+miner.pid

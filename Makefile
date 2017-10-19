@@ -1,4 +1,3 @@
-GETH = ../build/bin/geth
 PWD = $(shell pwd)
 GETH_FLAGS = --identity "landchain-1" \
 	--rpc --rpcport "8080" --rpccorsdomain "*" \
@@ -6,28 +5,42 @@ GETH_FLAGS = --identity "landchain-1" \
 	--port "30303" --nodiscover \
 	--rpcapi "db,eth,net,web3" \
 	--networkid 1999
+GETH = ../build/bin/geth $(GETH_FLAGS)
 
 genesis.json: alloc-genesis.json.m4
 	m4 -DACCOUNT='"0x2a1c04fb0e2f0672488d6f4172f3620ab49437f4"' $< > $@
 
-data:
-	$(GETH) $(GETH_FLAGS) init "genesis.json"
+stamps/create-datadir: genesis.json
+	$(GETH) init "genesis.json"
+	touch $@
 
-account-number: data
+account-number: stamps/create-datadir
 	echo 'personal.newAccount("mypassword");' | \
-	$(GETH) $(GETH_FLAGS) console | \
+	$(GETH) console | \
 	grep '^"0x' > $@
-
-stamps/clean-data: account-number
-	(cd data && rm -rf geth)
 
 alloc-genesis.json: alloc-genesis.json.m4 account-number
 	m4 -DACCOUNT="`cat account-number`" $< > $@
 
+stamps/clean-data: account-number
+	(cd data && rm -rf geth)
+	touch $@
+
 stamps/blockchain-with-alloc: alloc-genesis.json stamps/clean-data
-	$(GETH) $(GETH_FLAGS) init "alloc-genesis.json"
+	$(GETH) init "alloc-genesis.json"
+	touch $@
+
+miner.pid: stamps/blockchain-with-alloc account-number
+	$(GETH) --etherbase=$(shell cat account-number | tr -d '"') \
+	--mine --minerthreads 1 --maxpeers 0 --verbosity 3 \
+	--gasprice 20000000000 --unlock 0 --password password-file \
+	> miner.log 2>&1 & echo $$! > $@
+
+.PHONY: kill-miner
+kill-miner:
+	kill $(shell cat miner.pid) && rm miner.pid
 
 .PHONY: console
 console:
-	$(GETH) $(GETH_FLAGS) console
+	$(GETH) console
 
