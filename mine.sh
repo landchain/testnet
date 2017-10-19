@@ -1,0 +1,12 @@
+geth \
+	--identity "landchain-1" \
+	--rpc --rpcport "8080" --rpccorsdomain "http://localhost:3000/" \
+	--datadir "/Users/jaakko/Projects/landchain-testnet/data" \
+	--port "30303" --nodiscover \
+	--rpcapi "db,eth,net,web3" \
+	--networkid 1999 \
+	--etherbase=0xddbbf126b6b3e9243e6351a5ff16d01bd967c4e1 \
+	--mine --minerthreads 1 \
+	--maxpeers 0 --verbosity 3 \
+	--gasprice 20000000000 \
+	--unlock 0 --password /Users/jaakko/Projects/landchain-testnet/password
