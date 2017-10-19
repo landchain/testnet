@@ -5,7 +5,10 @@ GETH_FLAGS = --identity "landchain-1" \
 	--port "30303" --nodiscover \
 	--rpcapi "db,eth,net,web3" \
 	--networkid 1999
-GETH = ../build/bin/geth $(GETH_FLAGS)
+GETH_PATH = ../build/bin/geth
+GETH = $(GETH_PATH) $(GETH_FLAGS)
+
+all: miner.pid
 
 genesis.json: alloc-genesis.json.m4
 	m4 -DACCOUNT='"0x2a1c04fb0e2f0672488d6f4172f3620ab49437f4"' $< > $@
@@ -42,5 +45,9 @@ kill-miner:
 
 .PHONY: console
 console:
+	$(GETH_PATH) attach ipc:./data/geth.ipc
+
+.PHONY: test-console
+test-console:
 	$(GETH) console
 
